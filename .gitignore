@@ -1,0 +1,21 @@
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+
+# Local account data and authenticated sessions
+*.db
+*.sqlite
+*.sqlite3
+sessions/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Operating system files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FollowersPlan — Live Instagram Follower & Unfollower Suite</title>
+  
+  <!-- =========================================================================
+       PWA (PROGRESSIVE WEB APP) CONFIGURATION & META TAGS
+       Enables installation as a standalone mobile app on iOS & Android
+       ========================================================================= -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FollowersPlan">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <!-- Tailwind CSS & Lucide Icons CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf2f8',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .ig-bg-gradient {
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    }
+
+    .ig-text-gradient {
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-6">
+
+  <!-- =========================================================================
+       1. TOP NAVIGATION BAR (LOGO, LIVE STATUS DOT, SCAN TRIGGER, ACCOUNT PILL)
+       ========================================================================= -->
+  <header class="sticky top-0 z-40 w-full glass-card border-b border-slate-800/80 px-4 lg:px-8 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Logo & Live API Status Dot -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl ig-bg-gradient flex items-center justify-center shadow-lg shadow-pink-500/20 text-white font-bold text-xl flex-shrink-0">
+          <i data-lucide="instagram" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg md:text-xl font-extrabold tracking-tight flex items-center gap-2">
+            Followers<span class="ig-text-gradient">Plan</span>
+            <!-- DYNAMIC API STATUS INDICATOR: Updated via checkApiHealth() -->
+            <span id="api-status-pill" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="api-status-label">Live API Ready</span>
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">Real-Time Instagram Follower & Unfollower Platform</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 md:gap-3">
+        
+        <!-- Step-by-Step Live Guide Button -->
+        <button onclick="openWizardModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700/80 transition-all">
+          <i data-lucide="help-circle" class="w-4 h-4 text-sky-400"></i>
+          <span>Live Setup Guide</span>
+        </button>
+
+        <!-- Scan Button with Live Spinner Animation -->
+        <button id="btn-scan" onclick="triggerScan()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold text-white ig-bg-gradient shadow-md shadow-pink-500/20 hover:opacity-95 active:scale-95 transition-all">
+          <i data-lucide="refresh-cw" id="icon-scan" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Scan Profiles</span>
+          <span class="sm:hidden">Scan</span>
+        </button>
+
+        <!-- Account Pill Container: Dynamic avatar and username populated by JS -->
+        <div id="account-pill-container">
+          <button onclick="openConnectModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-medium bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all">
+            <i data-lucide="user-plus" class="w-4 h-4 text-pink-400"></i>
+            <span>Connect Live</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. REAL-TIME STREAMING SCAN PROGRESS BANNER
+       Shows live percentage, phase, and counters ticking up while scanning
+       ========================================================================= -->
+  <div id="live-scan-banner" class="hidden max-w-7xl w-full mx-auto px-4 lg:px-8 pt-4">
+    <div class="glass-card bg-slate-900/90 rounded-2xl p-4 border border-pink-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg ig-bg-gradient text-white flex items-center justify-center">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+          </div>
+          <div>
+            <div id="scan-banner-message" class="text-xs font-bold text-white">Live Instagram API Scan in progress...</div>
+            <div id="scan-banner-subtext" class="text-[11px] text-slate-400">Cross-referencing followers against following list</div>
+          </div>
+        </div>
+        <div id="scan-banner-percent" class="text-sm font-black text-pink-400">0%</div>
+      </div>
+
+      <!-- Animated Progress Bar Width -->
+      <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700/60">
+        <div id="scan-banner-bar" class="h-full ig-bg-gradient rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       3. MAIN DASHBOARD (PROFILE HERO, LIVE STATS, FILTER TABS, PROFILES LIST)
+       ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+
+    <!-- PROFILE HERO BANNER & REAL-TIME STATS -->
+    <div id="profile-hero" class="glass-card rounded-2xl p-5 md:p-6 border border-slate-800 shadow-xl relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-80 h-80 ig-bg-gradient opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        
+        <!-- Live Profile Metadata -->
+        <div class="flex items-center gap-4 md:gap-5">
+          <!-- Story Avatar Ring -->
+          <div class="relative p-1 rounded-full ig-bg-gradient flex-shrink-0 shadow-lg shadow-pink-500/20">
+            <img id="hero-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop" alt="Profile" class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-slate-900 bg-slate-800">
+            <span id="hero-mode-badge" class="absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 border border-slate-900 shadow">
+              LIVE
+            </span>
+          </div>
+
+          <!-- Names & Meta -->
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="hero-username" class="text-xl md:text-2xl font-black text-white">@username</h2>
+              <i id="hero-verified" data-lucide="badge-check" class="w-5 h-5 text-sky-400 fill-sky-400/20"></i>
+            </div>
+            <p id="hero-fullname" class="text-sm text-slate-300 font-medium">Instagram Account</p>
+            <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+              <p id="hero-last-scanned" class="text-xs text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-pink-400"></i>
+                Last scan: <span id="text-last-scanned">Just now</span>
+              </p>
+              <button onclick="openWizardModal()" class="text-xs text-sky-400 hover:text-sky-300 underline font-medium flex items-center gap-1">
+                <i data-lucide="sliders" class="w-3 h-3"></i> Setup Live Guide
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Summary Metrics (Live Count Binders) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 w-full lg:w-auto">
+          
+          <!-- Not Following Back Metric -->
+          <div onclick="switchTab('not_following_back')" class="cursor-pointer glass-card rounded-xl p-3 md:p-4 border-l-4 border-rose-500 hover:scale-[1.02] transition-transform">
+            <div class="flex items-center justify-between text-xs text-rose-400 font-medium">
+              <span>Not Following Back</span>
+              <i data-lucide="user-x" class="w-4 h-4"></i>
+            </div>
+            <div id="stat-not-following-back" class="text-2xl md:text-3xl font-black text-white mt-1">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Don't follow you back</div>
+          </div>
+
+          <!-- Weekly Unfollowers Metric -->
+          <div onclick="switchTab('weekly_reports')" class="cursor-pointer glass-card rounded-xl p-3 md:p-4 border-l-4 border-purple-500 hover:scale-[1.02] transition-transform">
+            <div class="flex items-center justify-between text-xs text-purple-400 font-medium">
+              <span>Lost (Weekly)</span>
+              <i data-lucide="user-minus" class="w-4 h-4"></i>
+            </div>
+            <div id="stat-lost-weekly" class="text-2xl md:text-3xl font-black text-white mt-1">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Unfollowed recently</div>
+          </div>
+
+          <!-- Mutual Friends Metric -->
+          <div onclick="switchTab('mutual')" class="cursor-pointer glass-card rounded-xl p-3 md:p-4 border-l-4 border-sky-500 hover:scale-[1.02] transition-transform">
+            <div class="flex items-center justify-between text-xs text-sky-400 font-medium">
+              <span>Mutuals</span>
+              <i data-lucide="users" class="w-4 h-4"></i>
+            </div>
+            <div id="stat-mutual" class="text-2xl md:text-3xl font-black text-white mt-1">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Follow each other</div>
+          </div>
+
+          <!-- Fans Metric -->
+          <div onclick="switchTab('fans')" class="cursor-pointer glass-card rounded-xl p-3 md:p-4 border-l-4 border-emerald-500 hover:scale-[1.02] transition-transform">
+            <div class="flex items-center justify-between text-xs text-emerald-400 font-medium">
+              <span>Fans</span>
+              <i data-lucide="heart" class="w-4 h-4"></i>
+            </div>
+            <div id="stat-fans" class="text-2xl md:text-3xl font-black text-white mt-1">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Follow you, you don't</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- TABS & FILTER BAR -->
+    <div class="space-y-4">
+      
+      <!-- Horizontal Filter Navigation -->
+      <div class="flex items-center justify-between gap-3 overflow-x-auto pb-2 border-b border-slate-800">
+        
+        <div class="flex items-center gap-2 flex-shrink-0">
+          
+          <button onclick="switchTab('not_following_back')" id="tab-not_following_back" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+            <span>Not Following Back</span>
+            <span id="badge-not-following-back" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">0</span>
+          </button>
+
+          <button onclick="switchTab('weekly_reports')" id="tab-weekly_reports" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <i data-lucide="calendar" class="w-4 h-4"></i>
+            <span>Weekly Reports</span>
+            <span id="badge-weekly-reports" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500 text-white">0</span>
+          </button>
+
+          <button onclick="switchTab('mutual')" id="tab-mutual" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Mutual Friends</span>
+            <span id="badge-mutual" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">0</span>
+          </button>
+
+          <button onclick="switchTab('fans')" id="tab-fans" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <i data-lucide="heart" class="w-4 h-4"></i>
+            <span>Fans</span>
+            <span id="badge-fans" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">0</span>
+          </button>
+
+          <button onclick="switchTab('all_following')" id="tab-all_following" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <i data-lucide="list" class="w-4 h-4"></i>
+            <span>All Following</span>
+          </button>
+
+          <button onclick="switchTab('whitelisted')" id="tab-whitelisted" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            <span>Protected</span>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Action Toolbar (Live Search, Multi-Select, Bulk Unfollow Trigger) -->
+      <div id="toolbar-container" class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        
+        <!-- Live Instant Search -->
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search username or name in real-time..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all">
+        </div>
+
+        <!-- Bulk Actions Controls -->
+        <div id="bulk-controls" class="flex items-center gap-2 justify-between sm:justify-end">
+          
+          <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs font-medium text-slate-300 cursor-pointer select-none hover:bg-slate-800 transition-all">
+            <input type="checkbox" id="checkbox-select-all" onchange="toggleSelectAll(this.checked)" class="rounded text-pink-600 focus:ring-pink-500 bg-slate-900 border-slate-600 w-4 h-4">
+            <span>Select All</span>
+          </label>
+
+          <button id="btn-bulk-unfollow" onclick="openBulkModal()" disabled class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed transition-all">
+            <i data-lucide="user-minus" class="w-4 h-4"></i>
+            <span>Bulk Unfollow (<span id="selected-count">0</span>)</span>
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- CONTENT DISPLAY AREA -->
+    
+    <!-- 1. Profiles Grid / List -->
+    <div id="profiles-section" class="space-y-3">
+      
+      <!-- Dynamic Profile List (Populated by renderProfiles()) -->
+      <div id="profiles-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="profiles-empty" class="hidden glass-card rounded-2xl p-12 text-center space-y-3">
+        <div class="w-16 h-16 rounded-full bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto">
+          <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">All Clear!</h3>
+        <p class="text-sm text-slate-400 max-w-sm mx-auto">No profiles found in this category matching your filters.</p>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="profiles-loading" class="hidden py-16 text-center space-y-4">
+        <div class="w-12 h-12 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mx-auto"></div>
+        <p class="text-sm text-slate-400 font-medium">Scanning live Instagram profiles...</p>
+      </div>
+
+    </div>
+
+    <!-- 2. Weekly Unfollowers Report Section -->
+    <div id="weekly-reports-section" class="hidden space-y-6">
+      
+      <div class="glass-card rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="calendar-days" class="w-5 h-5 text-purple-400"></i>
+              Weekly Unfollowers Dynamic Tracking
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-xl">
+              FollowersPlan continuously records snapshots between scans. When someone unfollows you, they are logged here with timestamps so you can quickly unfollow them back.
+            </p>
+          </div>
+          <button onclick="exportWeeklyReport()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 transition-all self-start md:self-auto">
+            <i data-lucide="download" class="w-4 h-4 text-purple-400"></i>
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekly Unfollowers Table / List -->
+      <div id="weekly-reports-list" class="space-y-3">
+        <!-- Rendered by loadWeeklyReports() -->
+      </div>
+
+      <div id="weekly-reports-empty" class="hidden glass-card rounded-2xl p-12 text-center space-y-3">
+        <div class="w-16 h-16 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
+          <i data-lucide="smile" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Unfollowers Detected This Week</h3>
+        <p class="text-sm text-slate-400 max-w-sm mx-auto">Great news! No one has unfollowed your account since your previous scan snapshots.</p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       4. STEP-BY-STEP LIVE ONBOARDING WIZARD MODAL
+       ========================================================================= -->
+  <div id="modal-wizard" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl ig-bg-gradient text-white flex items-center justify-center font-bold">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base md:text-lg font-extrabold text-white">Live Instagram Setup: Step-by-Step</h3>
+            <p class="text-xs text-slate-400">How FollowersPlan connects safely with real Instagram accounts</p>
+          </div>
+        </div>
+        <button onclick="closeWizardModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Step Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full ig-bg-gradient text-white text-xs font-bold flex items-center justify-center">1</span>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Connect Live Session</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Connect via your browser's <code class="bg-slate-900 px-1 py-0.5 rounded text-pink-300 font-mono">sessionid</code> cookie or Instagram credentials. This bypasses automated bot detection.
+          </p>
+        </div>
+
+        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full ig-bg-gradient text-white text-xs font-bold flex items-center justify-center">2</span>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Live API Verification</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            The app verifies handshake validity directly with Instagram's web endpoints and retrieves your active follower stats.
+          </p>
+        </div>
+
+        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full ig-bg-gradient text-white text-xs font-bold flex items-center justify-center">3</span>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Real-Time Deep Scan</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Background worker iterates through your Following list, compares each account with Followers, and checks who does NOT follow you.
+          </p>
+        </div>
+
+        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full ig-bg-gradient text-white text-xs font-bold flex items-center justify-center">4</span>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Safe Unfollow Dynamics</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Unfollow individually or in bulk. Every action includes built-in human jitter delays (5-8s) to protect your Instagram account.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
+        <button onclick="handleLoadDemo(); closeWizardModal();" class="text-xs text-slate-400 hover:text-pink-400">
+          Try Demo First
+        </button>
+        <button onclick="closeWizardModal(); openConnectModal();" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white ig-bg-gradient shadow-md shadow-pink-500/20 active:scale-95 transition-all">
+          Connect Real Account Now
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. SAFE BULK UNFOLLOW MODAL (LIVE COUNTDOWN & PAUSE CONTROLS)
+       ========================================================================= -->
+  <div id="modal-bulk" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Safe Bulk Unfollow Control Room</h3>
+            <p class="text-xs text-slate-400">Rate-limited execution to protect your live Instagram account</p>
+          </div>
+        </div>
+        <button onclick="closeBulkModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Live Countdown & Progress -->
+      <div id="bulk-progress-container" class="space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <span id="bulk-progress-text" class="text-slate-300 font-medium">Ready to unfollow <span id="bulk-modal-count">0</span> accounts</span>
+          <span id="bulk-progress-percent" class="text-pink-400 font-bold">0%</span>
+        </div>
+
+        <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+          <div id="bulk-progress-bar" class="h-full ig-bg-gradient rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <div id="bulk-status-message" class="text-xs text-slate-400 italic flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span>Click "Start Safe Unfollow" below to begin.</span>
+        </div>
+      </div>
+
+      <!-- Rate-Limit Delay Selector -->
+      <div id="bulk-settings" class="bg-slate-800/50 rounded-xl p-4 border border-slate-800 space-y-3 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300 font-medium">Safety Rate-Limit Delay:</span>
+          <select id="bulk-delay-select" class="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-pink-500">
+            <option value="6">Recommended (6s - 8s delay)</option>
+            <option value="12">Conservative (12s delay)</option>
+            <option value="2">Fast (Demo / Simulation)</option>
+          </select>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Instagram monitors sudden bursts of unfollows. Our randomized human jitter delay keeps your account safe from action blocks.
+        </p>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button id="btn-bulk-cancel" onclick="handleBulkCancel()" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button id="btn-bulk-start" onclick="executeBulkUnfollow()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-500/20">
+          <i data-lucide="play" class="w-4 h-4"></i>
+          <span>Start Safe Unfollow</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       6. CONNECT INSTAGRAM ACCOUNT MODAL (SESSION ID, 2FA, JSON EXPORT)
+       ========================================================================= -->
+  <div id="modal-connect" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl ig-bg-gradient text-white flex items-center justify-center">
+            <i data-lucide="instagram" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Connect Instagram Account</h3>
+            <p class="text-xs text-slate-400">Choose your preferred safe connection method</p>
+          </div>
+        </div>
+        <button onclick="closeConnectModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="grid grid-cols-3 gap-1 bg-slate-800/80 p-1 rounded-xl text-xs font-semibold text-center">
+        <button onclick="switchConnectTab('session')" id="conn-tab-session" class="py-2 rounded-lg bg-pink-600 text-white shadow">Session ID (Safest)</button>
+        <button onclick="switchConnectTab('credentials')" id="conn-tab-credentials" class="py-2 rounded-lg text-slate-400 hover:text-slate-200">Username/Pass</button>
+        <button onclick="switchConnectTab('export')" id="conn-tab-export" class="py-2 rounded-lg text-slate-400 hover:text-slate-200">JSON Export</button>
+      </div>
+
+      <!-- TAB 1: SESSION ID COOKIE -->
+      <div id="conn-section-session" class="space-y-4">
+        <div class="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60 text-xs text-slate-300 space-y-2">
+          <div class="font-bold text-pink-400 flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4"></i> Why Session ID is 100% Ban-Proof:
+          </div>
+          <p class="leading-relaxed">
+            By using your browser's existing Instagram login cookie (<code class="bg-slate-900 px-1 py-0.5 rounded text-pink-300 font-mono">sessionid</code>), Instagram sees the request coming from your authorized session without triggering security checkpoints.
+          </p>
+          <details class="cursor-pointer text-slate-400">
+            <summary class="hover:text-slate-200 font-medium">How to get your sessionid in 30 seconds</summary>
+            <ol class="list-decimal list-inside pl-1 pt-1.5 space-y-1 text-[11px] text-slate-300">
+              <li>Open <a href="https://instagram.com" target="_blank" class="text-pink-400 underline">instagram.com</a> in your browser.</li>
+              <li>Press <kbd class="bg-slate-900 px-1 py-0.5 rounded">F12</kbd> &rarr; Go to <b>Application</b> (or <b>Storage</b>) &rarr; <b>Cookies</b> &rarr; <code class="text-pink-300">https://www.instagram.com</code>.</li>
+              <li>Find the cookie named <code class="text-pink-300 font-mono">sessionid</code> and copy its Value.</li>
+            </ol>
+          </details>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Instagram sessionid Cookie</label>
+            <input type="password" id="input-session-id" placeholder="Paste your sessionid here (e.g. 6481920%3A...)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-pink-500 font-mono">
+          </div>
+
+          <button onclick="handleLoginSession()" id="btn-login-session" class="w-full py-2.5 rounded-xl text-xs font-bold text-white ig-bg-gradient shadow-md shadow-pink-500/20 hover:opacity-95 active:scale-95 transition-all">
+            Connect Live Session
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: USERNAME & PASSWORD -->
+      <div id="conn-section-credentials" class="hidden space-y-4">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Instagram Username</label>
+            <input type="text" id="input-username" placeholder="your_instagram_username" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Instagram Password</label>
+            <input type="password" id="input-password" placeholder="••••••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div id="field-2fa" class="hidden">
+            <label class="block text-xs font-semibold text-pink-400 mb-1">Two-Factor Security Code (2FA)</label>
+            <input type="text" id="input-2fa" placeholder="6-digit verification code" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-pink-500 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-pink-500 font-mono">
+          </div>
+
+          <button onclick="handleLoginCredentials()" id="btn-login-cred" class="w-full py-2.5 rounded-xl text-xs font-bold text-white ig-bg-gradient shadow-md shadow-pink-500/20 hover:opacity-95 active:scale-95 transition-all">
+            Log In
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 3: OFFICIAL JSON EXPORT IMPORT -->
+      <div id="conn-section-export" class="hidden space-y-4">
+        <div class="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60 text-xs text-slate-300 space-y-1.5">
+          <div class="font-bold text-sky-400 flex items-center gap-1.5">
+            <i data-lucide="file-json" class="w-4 h-4"></i> 100% Safe Offline Analysis
+          </div>
+          <p class="leading-relaxed">
+            Download your data from Instagram (<a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" class="text-sky-400 underline">Your Information</a> &rarr; Format: JSON), then upload <code class="text-pink-300 font-mono">followers_1.json</code> and <code class="text-pink-300 font-mono">following.json</code>.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Followers JSON File (followers_1.json)</label>
+            <input type="file" id="file-followers" accept=".json" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Following JSON File (following.json)</label>
+            <input type="file" id="file-following" accept=".json" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
+          </div>
+
+          <button onclick="handleImportExport()" id="btn-import-export" class="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 shadow-md shadow-sky-500/20 active:scale-95 transition-all">
+            Import & Compare
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Demo Switcher -->
+      <div class="border-t border-slate-800 pt-3 flex items-center justify-between">
+        <span class="text-xs text-slate-400">Want to test features right now?</span>
+        <button onclick="handleLoadDemo()" class="text-xs font-bold text-pink-400 hover:text-pink-300 underline flex items-center gap-1">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          Explore with Demo Account
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- MOBILE BOTTOM NAVIGATION BAR -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-slate-800/80 px-2 py-2 flex items-center justify-around">
+    
+    <button onclick="switchTab('not_following_back')" id="nav-btn-not-following" class="flex flex-col items-center gap-1 py-1 px-3 text-rose-400 font-bold">
+      <i data-lucide="user-x" class="w-5 h-5"></i>
+      <span class="text-[10px]">Non-Followers</span>
+    </button>
+
+    <button onclick="switchTab('weekly_reports')" id="nav-btn-weekly" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span class="text-[10px]">Weekly</span>
+    </button>
+
+    <button onclick="switchTab('mutual')" id="nav-btn-mutual" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[10px]">Mutuals</span>
+    </button>
+
+    <button onclick="openConnectModal()" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[10px]">Account</span>
+    </button>
+
+  </nav>
+
+  <!-- =========================================================================
+       7. CLIENT-SIDE JAVASCRIPT ENGINE & REAL-TIME API BINDINGS
+       ========================================================================= -->
+  <script>
+    /**
+     * =========================================================================
+     * APPLICATION STATE STORE
+     * =========================================================================
+     * Holds live accounts, calculated metrics, active tab, selected profiles,
+     * and active polling timers.
+     */
+    let state = {
+      account: null,             // Currently active Instagram account
+      stats: null,               // Stats: followers, following, non-followers, mutuals
+      currentTab: 'not_following_back', // Active tab filter
+      profiles: [],              // Cached profiles for current tab
+      weeklyReports: [],         // Weekly unfollowers diff logs
+      selectedUsernames: new Set(), // Checkboxed usernames for bulk unfollow
+      searchQuery: '',           // Current search filter
+      isBulkRunning: false,      // Bulk unfollow loop state
+      bulkPollInterval: null,    // Timer ID for bulk unfollow progress polling
+      scanPollInterval: null     // Timer ID for live scan progress polling
+    };
+
+    /**
+     * INITIALIZATION ON PAGE LOAD
+     * Registers service worker, loads icons, and fetches initial account stats.
+     */
+    document.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      initPWA();
+      await fetchAccountAndStats();
+      await loadTabContent();
+    });
+
+    /**
+     * PWA SERVICE WORKER REGISTRATION
+     */
+    function initPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+      }
+    }
+
+    /**
+     * =========================================================================
+     * DYNAMIC DATA FETCHING: CURRENT ACCOUNT & METRICS
+     * API Endpoint: GET /api/account/current
+     * =========================================================================
+     */
+    async function fetchAccountAndStats() {
+      try {
+        const res = await fetch('/api/account/current');
+        const data = await res.json();
+        if (data.authenticated && data.account) {
+          state.account = data.account;
+          state.stats = data.stats;
+          renderProfileHero();
+          checkApiHealth();
+        } else {
+          openWizardModal();
+        }
+      } catch (e) {
+        console.error('Error fetching account:', e);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * LIVE API HEALTH MONITORING
+     * API Endpoint: GET /api/auth/health
+     * Pings Instagram to confirm the stored session cookie is still valid.
+     * =========================================================================
+     */
+    async function checkApiHealth() {
+      try {
+        const res = await fetch('/api/auth/health');
+        const data = await res.json();
+        const pill = document.getElementById('api-status-pill');
+        const label = document.getElementById('api-status-label');
+        if (data.healthy) {
+          label.textContent = data.mode === 'live' ? 'Live API Active' : 'Demo Mode';
+          pill.className = "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1";
+        } else {
+          label.textContent = 'Session Expired';
+          pill.className = "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1";
+        }
+      } catch (e) {}
+    }
+
+    /**
+     * =========================================================================
+     * DOM BINDING: HERO BANNER & STAT COUNTERS
+     * Updates profile avatar, handle, verified badge, and live metric counts.
+     * =========================================================================
+     */
+    function renderProfileHero() {
+      if (!state.account) return;
+      const acc = state.account;
+      const stats = state.stats || {};
+
+      document.getElementById('hero-username').textContent = '@' + acc.username;
+      document.getElementById('hero-fullname').textContent = acc.full_name || acc.username;
+      if (acc.profile_pic_url) {
+        document.getElementById('hero-avatar').src = acc.profile_pic_url;
+      }
+      
+      const badge = document.getElementById('hero-mode-badge');
+      badge.textContent = (acc.mode || 'live').toUpperCase();
+      badge.className = acc.mode === 'live' 
+        ? "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 border border-slate-900 shadow"
+        : "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 border border-slate-900 shadow";
+
+      // Bind dynamic stats counters
+      document.getElementById('stat-not-following-back').textContent = stats.not_following_back_count || 0;
+      document.getElementById('badge-not-following-back').textContent = stats.not_following_back_count || 0;
+      
+      document.getElementById('stat-lost-weekly').textContent = stats.lost_weekly || 0;
+      document.getElementById('badge-weekly-reports').textContent = stats.lost_weekly || 0;
+
+      document.getElementById('stat-mutual').textContent = stats.mutual_count || 0;
+      document.getElementById('badge-mutual').textContent = stats.mutual_count || 0;
+
+      document.getElementById('stat-fans').textContent = stats.fans_count || 0;
+      document.getElementById('badge-fans').textContent = stats.fans_count || 0;
+
+      // Update Top Nav Account Pill
+      const pillContainer = document.getElementById('account-pill-container');
+      pillContainer.innerHTML = `
+        <button onclick="openConnectModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all text-xs">
+          <img src="${acc.profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + acc.username}" class="w-6 h-6 rounded-full object-cover">
+          <span class="font-bold hidden sm:inline">@${acc.username}</span>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+        </button>
+      `;
+      lucide.createIcons();
+    }
+
+    /**
+     * TAB SWITCHING LOGIC
+     */
+    async function switchTab(tabName) {
+      state.currentTab = tabName;
+      state.selectedUsernames.clear();
+      updateSelectedCount();
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = "tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60";
+      });
+
+      const activeBtn = document.getElementById(`tab-${tabName}`);
+      if (activeBtn) {
+        if (tabName === 'not_following_back') {
+          activeBtn.className = "tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30";
+        } else if (tabName === 'weekly_reports') {
+          activeBtn.className = "tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all bg-purple-500/10 text-purple-400 border border-purple-500/30";
+        } else {
+          activeBtn.className = "tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all bg-pink-500/10 text-pink-400 border border-pink-500/30";
+        }
+      }
+
+      const profilesSec = document.getElementById('profiles-section');
+      const weeklySec = document.getElementById('weekly-reports-section');
+      const bulkControls = document.getElementById('bulk-controls');
+
+      if (tabName === 'weekly_reports') {
+        profilesSec.classList.add('hidden');
+        weeklySec.classList.remove('hidden');
+        bulkControls.classList.add('hidden');
+      } else {
+        profilesSec.classList.remove('hidden');
+        weeklySec.classList.add('hidden');
+        if (tabName === 'not_following_back' || tabName === 'all_following') {
+          bulkControls.classList.remove('hidden');
+        } else {
+          bulkControls.classList.add('hidden');
+        }
+      }
+
+      await loadTabContent();
+    }
+
+    async function loadTabContent() {
+      if (state.currentTab === 'weekly_reports') {
+        await loadWeeklyReports();
+      } else {
+        await loadRelationships();
+      }
+    }
+
+    /**
+     * =========================================================================
+     * DYNAMIC DATA FETCHING: RELATIONSHIPS
+     * API Endpoint: GET /api/relationships?filter={tab}&search={query}
+     * =========================================================================
+     */
+    async function loadRelationships() {
+      const listEl = document.getElementById('profiles-list');
+      const emptyEl = document.getElementById('profiles-empty');
+      const loadingEl = document.getElementById('profiles-loading');
+
+      listEl.innerHTML = '';
+      loadingEl.classList.remove('hidden');
+      emptyEl.classList.add('hidden');
+
+      try {
+        const res = await fetch(`/api/relationships?filter=${state.currentTab}&search=${encodeURIComponent(state.searchQuery)}`);
+        const data = await res.json();
+        state.profiles = data.results || [];
+
+        loadingEl.classList.add('hidden');
+
+        if (state.profiles.length === 0) {
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        renderProfiles(state.profiles);
+      } catch (e) {
+        console.error('Error loading relationships:', e);
+        loadingEl.classList.add('hidden');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * DOM BINDING: RENDER PROFILE CARDS
+     * Generates profile cards with avatar, badges, whitelist shield, and
+     * single unfollow action button.
+     * =========================================================================
+     */
+    function renderProfiles(profiles) {
+      const listEl = document.getElementById('profiles-list');
+      listEl.innerHTML = profiles.map(p => {
+        const isSelected = state.selectedUsernames.has(p.target_username);
+        const isWhitelisted = p.is_whitelisted;
+        const isUnfollowed = p.unfollowed_by_app;
+
+        let badgeTag = '';
+        if (p.followed_by_me && !p.follows_me) {
+          badgeTag = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Doesn't Follow You</span>`;
+        } else if (p.followed_by_me && p.follows_me) {
+          badgeTag = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">Mutual Friend</span>`;
+        } else if (!p.followed_by_me && p.follows_me) {
+          badgeTag = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Fan (Follows You)</span>`;
+        }
+
+        return `
+          <div id="card-${p.target_username}" class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3 border border-slate-800/80 transition-all hover:border-slate-700">
+            
+            <div class="flex items-center gap-3 min-w-0">
+              
+              <!-- Multi-select checkbox -->
+              ${p.followed_by_me && !isWhitelisted && !isUnfollowed ? `
+                <input type="checkbox" onchange="toggleSelectUser('${p.target_username}', this.checked)" ${isSelected ? 'checked' : ''} class="rounded text-pink-600 focus:ring-pink-500 bg-slate-900 border-slate-700 w-4 h-4 flex-shrink-0 cursor-pointer">
+              ` : `
+                <div class="w-4 flex-shrink-0"></div>
+              `}
+
+              <!-- Profile Avatar -->
+              <div class="relative flex-shrink-0">
+                <img src="${p.target_profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + p.target_username}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=${p.target_username}'" class="w-12 h-12 rounded-full object-cover border border-slate-700 bg-slate-800">
+                ${p.is_verified ? `<i data-lucide="badge-check" class="w-4 h-4 text-sky-400 fill-sky-400/20 absolute -bottom-1 -right-1"></i>` : ''}
+              </div>
+
+              <!-- Name & Handle -->
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <a href="https://instagram.com/${p.target_username}" target="_blank" class="text-sm font-bold text-white hover:text-pink-400 transition-colors truncate">
+                    @${p.target_username}
+                  </a>
+                  <a href="https://instagram.com/${p.target_username}" target="_blank" title="View on Instagram" class="text-slate-500 hover:text-pink-400 transition-colors">
+                    <i data-lucide="external-link" class="w-3 h-3"></i>
+                  </a>
+                </div>
+                <div class="text-xs text-slate-400 truncate">${p.target_full_name || p.target_username}</div>
+                <div class="mt-1">${badgeTag}</div>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons: Whitelist & Unfollow -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+              
+              <!-- Protect / Whitelist Button -->
+              <button onclick="handleToggleWhitelist('${p.target_username}')" title="${isWhitelisted ? 'Remove protection' : 'Protect from bulk unfollow'}" class="p-2 rounded-xl text-xs ${isWhitelisted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400 hover:text-slate-200'} transition-all">
+                <i data-lucide="${isWhitelisted ? 'shield-check' : 'shield'}" class="w-4 h-4"></i>
+              </button>
+
+              <!-- Single Unfollow Button -->
+              ${p.followed_by_me && !isUnfollowed ? `
+                <button id="btn-unfollow-${p.target_username}" onclick="handleUnfollowSingle('${p.target_username}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 active:scale-95 transition-all">
+                  <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+                  <span>Unfollow</span>
+                </button>
+              ` : `
+                <span class="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold text-slate-400 bg-slate-800/80 border border-slate-700/60">
+                  <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
+                  <span>${isUnfollowed ? 'Unfollowed' : 'Not following'}</span>
+                </span>
+              `}
+
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    /**
+     * =========================================================================
+     * DYNAMIC DATA FETCHING: WEEKLY UNFOLLOWERS REPORTS
+     * API Endpoint: GET /api/reports/weekly
+     * =========================================================================
+     */
+    async function loadWeeklyReports() {
+      const listEl = document.getElementById('weekly-reports-list');
+      const emptyEl = document.getElementById('weekly-reports-empty');
+      listEl.innerHTML = '';
+      emptyEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/reports/weekly');
+        const data = await res.json();
+        state.weeklyReports = data.reports || [];
+
+        if (state.weeklyReports.length === 0) {
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        listEl.innerHTML = state.weeklyReports.map(r => {
+          const dateStr = new Date(r.unfollowed_date).toLocaleDateString(undefined, {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          return `
+            <div id="weekly-card-${r.target_username}" class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3 border border-purple-500/20">
+              
+              <div class="flex items-center gap-3 min-w-0">
+                <img src="${r.target_profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + r.target_username}" class="w-12 h-12 rounded-full object-cover border border-purple-500/40 bg-slate-800 flex-shrink-0">
+                
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <a href="https://instagram.com/${r.target_username}" target="_blank" class="text-sm font-bold text-white hover:text-purple-400 transition-colors truncate">
+                      @${r.target_username}
+                    </a>
+                  </div>
+                  <div class="text-xs text-slate-400 truncate">${r.target_full_name || r.target_username}</div>
+                  <div class="text-[11px] text-purple-400 mt-1 flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3 h-3"></i>
+                    Unfollowed you on ${dateStr}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Unfollow Back Button -->
+              <div class="flex-shrink-0">
+                ${!r.we_unfollowed && r.followed_by_me ? `
+                  <button id="btn-unfollow-weekly-${r.target_username}" onclick="handleUnfollowSingle('${r.target_username}', true)" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-md shadow-rose-600/20">
+                    <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+                    <span>Unfollow</span>
+                  </button>
+                ` : `
+                  <span class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 bg-slate-800/80 border border-slate-700/60">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Unfollowed</span>
+                  </span>
+                `}
+              </div>
+
+            </div>
+          `;
+        }).join('');
+
+        lucide.createIcons();
+      } catch (e) {
+        console.error('Error loading weekly reports:', e);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * REAL-TIME SCAN ENGINE: TRIGGER & PROGRESS POLLING
+     * API Endpoint 1: POST /api/scan/start
+     * API Endpoint 2: GET  /api/scan/progress (Polled every 1000ms)
+     * =========================================================================
+     */
+    async function triggerScan() {
+      const banner = document.getElementById('live-scan-banner');
+      const btn = document.getElementById('btn-scan');
+      const icon = document.getElementById('icon-scan');
+      
+      icon.classList.add('animate-spin');
+      btn.disabled = true;
+      banner.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/scan/start', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+          pollScanProgress();
+        } else {
+          showToast(data.error || 'Failed to start scan', 'error');
+          icon.classList.remove('animate-spin');
+          btn.disabled = false;
+          banner.classList.add('hidden');
+        }
+      } catch (e) {
+        icon.classList.remove('animate-spin');
+        btn.disabled = false;
+        banner.classList.add('hidden');
+        showToast('Error connecting: ' + e.message, 'error');
+      }
+    }
+
+    function pollScanProgress() {
+      if (state.scanPollInterval) clearInterval(state.scanPollInterval);
+
+      const banner = document.getElementById('live-scan-banner');
+      const bar = document.getElementById('scan-banner-bar');
+      const pctText = document.getElementById('scan-banner-percent');
+      const msgText = document.getElementById('scan-banner-message');
+      const subText = document.getElementById('scan-banner-subtext');
+
+      state.scanPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/scan/progress');
+          const data = await res.json();
+          const job = data.job || {};
+
+          if (job.status === 'running') {
+            const pct = job.progress_percent || 20;
+            bar.style.width = pct + '%';
+            pctText.textContent = pct + '%';
+            msgText.textContent = job.message || 'Scanning Instagram API...';
+            if (job.following_count || job.followers_count) {
+              subText.textContent = `Following: ${job.following_count || 0} | Followers: ${job.followers_count || 0}`;
+            }
+          } else if (job.status === 'completed') {
+            clearInterval(state.scanPollInterval);
+            state.scanPollInterval = null;
+
+            bar.style.width = '100%';
+            pctText.textContent = '100%';
+            msgText.textContent = job.message || 'Scan completed successfully!';
+            
+            showToast('Scan complete! Non-followers updated.', 'success');
+            await fetchAccountAndStats();
+            await loadTabContent();
+
+            setTimeout(() => {
+              banner.classList.add('hidden');
+              document.getElementById('icon-scan').classList.remove('animate-spin');
+              document.getElementById('btn-scan').disabled = false;
+            }, 1200);
+          } else if (job.status === 'failed') {
+            clearInterval(state.scanPollInterval);
+            state.scanPollInterval = null;
+            showToast(job.error || 'Scan failed', 'error');
+            banner.classList.add('hidden');
+            document.getElementById('icon-scan').classList.remove('animate-spin');
+            document.getElementById('btn-scan').disabled = false;
+          }
+        } catch (e) {
+          console.error('Error polling scan progress:', e);
+        }
+      }, 1000);
+    }
+
+    /**
+     * =========================================================================
+     * LIVE ACTION: SINGLE UNFOLLOW
+     * API Endpoint: POST /api/unfollow
+     * Payload: {"username": target_username}
+     * =========================================================================
+     */
+    async function handleUnfollowSingle(username, fromWeekly = false) {
+      const btnId = fromWeekly ? `btn-unfollow-weekly-${username}` : `btn-unfollow-${username}`;
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Unfollowing...</span>`;
+        btn.disabled = true;
+        lucide.createIcons();
+      }
+
+      try {
+        const res = await fetch('/api/unfollow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(`Unfollowed @${username}`, 'success');
+          state.stats = data.stats;
+          renderProfileHero();
+
+          if (btn) {
+            btn.outerHTML = `
+              <span class="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold text-slate-400 bg-slate-800/80 border border-slate-700/60 animate-in fade-in">
+                <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
+                <span>Unfollowed</span>
+              </span>
+            `;
+            lucide.createIcons();
+          }
+        } else {
+          showToast(data.error || 'Failed to unfollow', 'error');
+          if (btn) {
+            btn.innerHTML = `<i data-lucide="user-minus" class="w-3.5 h-3.5"></i><span>Unfollow</span>`;
+            btn.disabled = false;
+            lucide.createIcons();
+          }
+        }
+      } catch (e) {
+        showToast('Network error: ' + e.message, 'error');
+        if (btn) {
+          btn.innerHTML = `<i data-lucide="user-minus" class="w-3.5 h-3.5"></i><span>Unfollow</span>`;
+          btn.disabled = false;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    /**
+     * =========================================================================
+     * LIVE ACTION: WHITELIST PROTECTION TOGGLE
+     * API Endpoint: POST /api/relationships/whitelist
+     * Payload: {"username": target_username}
+     * =========================================================================
+     */
+    async function handleToggleWhitelist(username) {
+      try {
+        const res = await fetch('/api/relationships/whitelist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`@${username} ${data.is_whitelisted ? 'is now protected from bulk unfollow' : 'removed from protection'}`, 'info');
+          await loadTabContent();
+        }
+      } catch (e) {
+        showToast('Error toggling protection: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * SEARCH FILTER INPUT HANDLER
+     */
+    function handleSearch(val) {
+      state.searchQuery = val;
+      loadTabContent();
+    }
+
+    /**
+     * SELECTION CONTROLS FOR BULK UNFOLLOW
+     */
+    function toggleSelectUser(username, isChecked) {
+      if (isChecked) {
+        state.selectedUsernames.add(username);
+      } else {
+        state.selectedUsernames.delete(username);
+      }
+      updateSelectedCount();
+    }
+
+    function toggleSelectAll(isChecked) {
+      state.selectedUsernames.clear();
+      if (isChecked) {
+        state.profiles.forEach(p => {
+          if (p.followed_by_me && !p.is_whitelisted && !p.unfollowed_by_app) {
+            state.selectedUsernames.add(p.target_username);
+          }
+        });
+      }
+      renderProfiles(state.profiles);
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = state.selectedUsernames.size;
+      const countEl = document.getElementById('selected-count');
+      const btnBulk = document.getElementById('btn-bulk-unfollow');
+      
+      if (countEl) countEl.textContent = count;
+      if (btnBulk) {
+        if (count > 0) {
+          btnBulk.disabled = false;
+          btnBulk.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-600/20 active:scale-95 transition-all cursor-pointer";
+        } else {
+          btnBulk.disabled = true;
+          btnBulk.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed transition-all";
+        }
+      }
+    }
+
+    /**
+     * =========================================================================
+     * SAFE BULK UNFOLLOW CONTROLLER & PROGRESS POLLING
+     * API Endpoint 1: POST /api/bulk-unfollow/start
+     * API Endpoint 2: GET  /api/bulk-unfollow/status (Polled every 1000ms)
+     * API Endpoint 3: POST /api/bulk-unfollow/control (Pause/Cancel)
+     * =========================================================================
+     */
+    function openBulkModal() {
+      const count = state.selectedUsernames.size;
+      if (count === 0) return;
+      document.getElementById('bulk-modal-count').textContent = count;
+      document.getElementById('bulk-progress-bar').style.width = '0%';
+      document.getElementById('bulk-progress-percent').textContent = '0%';
+      document.getElementById('bulk-status-message').innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5"></i><span>Ready to safely unfollow ${count} accounts with randomized safe delay.</span>`;
+      document.getElementById('btn-bulk-start').classList.remove('hidden');
+      document.getElementById('modal-bulk').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeBulkModal() {
+      document.getElementById('modal-bulk').classList.add('hidden');
+      if (state.bulkPollInterval) {
+        clearInterval(state.bulkPollInterval);
+        state.bulkPollInterval = null;
+      }
+    }
+
+    async function executeBulkUnfollow() {
+      const targets = Array.from(state.selectedUsernames);
+      const delay = parseFloat(document.getElementById('bulk-delay-select').value);
+
+      const btnStart = document.getElementById('btn-bulk-start');
+      btnStart.disabled = true;
+      btnStart.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Unfollowing...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/bulk-unfollow/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targets, delay })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          pollBulkStatus();
+        } else {
+          showToast(data.error || 'Failed to start bulk unfollow', 'error');
+          btnStart.disabled = false;
+          btnStart.innerHTML = `<span>Start Safe Unfollow</span>`;
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+        btnStart.disabled = false;
+        btnStart.innerHTML = `<span>Start Safe Unfollow</span>`;
+      }
+    }
+
+    function pollBulkStatus() {
+      if (state.bulkPollInterval) clearInterval(state.bulkPollInterval);
+
+      state.bulkPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/bulk-unfollow/status');
+          const data = await res.json();
+
+          if (data.status === 'running' || data.status === 'paused') {
+            const pct = Math.round((data.current_index / data.total) * 100);
+            document.getElementById('bulk-progress-bar').style.width = pct + '%';
+            document.getElementById('bulk-progress-percent').textContent = pct + '%';
+            document.getElementById('bulk-progress-text').textContent = `Unfollowing ${data.current_index} of ${data.total}`;
+            document.getElementById('bulk-status-message').innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5 text-pink-400"></i><span>${data.message}</span>`;
+            lucide.createIcons();
+          } else if (data.status === 'completed' || data.status === 'cancelled') {
+            clearInterval(state.bulkPollInterval);
+            state.bulkPollInterval = null;
+
+            document.getElementById('bulk-progress-bar').style.width = '100%';
+            document.getElementById('bulk-progress-percent').textContent = '100%';
+            document.getElementById('bulk-status-message').innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i><span>${data.message}</span>`;
+            
+            showToast(`Bulk complete: ${data.completed.length} accounts unfollowed`, 'success');
+            await fetchAccountAndStats();
+            await loadTabContent();
+            
+            setTimeout(() => {
+              closeBulkModal();
+            }, 2000);
+          }
+        } catch (e) {
+          console.error('Error polling bulk status:', e);
+        }
+      }, 1000);
+    }
+
+    async function handleBulkCancel() {
+      try {
+        await fetch('/api/bulk-unfollow/control', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'cancel' })
+        });
+      } catch (e) {}
+      closeBulkModal();
+    }
+
+    /**
+     * MODAL TOGGLES
+     */
+    function openConnectModal() {
+      document.getElementById('modal-connect').classList.remove('hidden');
+    }
+
+    function closeConnectModal() {
+      document.getElementById('modal-connect').classList.add('hidden');
+    }
+
+    function openWizardModal() {
+      document.getElementById('modal-wizard').classList.remove('hidden');
+    }
+
+    function closeWizardModal() {
+      document.getElementById('modal-wizard').classList.add('hidden');
+    }
+
+    function switchConnectTab(tab) {
+      ['session', 'credentials', 'export'].forEach(t => {
+        document.getElementById(`conn-section-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`conn-tab-${t}`);
+        btn.className = "py-2 rounded-lg text-slate-400 hover:text-slate-200";
+      });
+
+      document.getElementById(`conn-section-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`conn-tab-${tab}`);
+      activeBtn.className = "py-2 rounded-lg bg-pink-600 text-white shadow";
+    }
+
+    /**
+     * =========================================================================
+     * LIVE AUTH: SESSION ID COOKIE SUBMISSION
+     * API Endpoint: POST /api/auth/login-session
+     * =========================================================================
+     */
+    async function handleLoginSession() {
+      const sessionId = document.getElementById('input-session-id').value.trim();
+      if (!sessionId) {
+        showToast('Please enter your sessionid cookie', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-login-session');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Connecting...`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/auth/login-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = `Connect Live Session`;
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          state.account = data.account;
+          state.stats = data.stats;
+          renderProfileHero();
+          closeConnectModal();
+          await triggerScan();
+        } else {
+          showToast(data.error || 'Connection failed', 'error');
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = `Connect Live Session`;
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * LIVE AUTH: USERNAME & PASSWORD SUBMISSION (WITH 2FA HANDLING)
+     * API Endpoint: POST /api/auth/login-credentials
+     * =========================================================================
+     */
+    async function handleLoginCredentials() {
+      const username = document.getElementById('input-username').value.trim();
+      const password = document.getElementById('input-password').value.trim();
+      const code2fa = document.getElementById('input-2fa').value.trim();
+
+      if (!username || !password) {
+        showToast('Username and password are required', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-login-cred');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Authenticating...`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/auth/login-credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, verification_code: code2fa || null })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = `Log In`;
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          state.account = data.account;
+          state.stats = data.stats;
+          renderProfileHero();
+          closeConnectModal();
+          await triggerScan();
+        } else if (data.need_2fa) {
+          document.getElementById('field-2fa').classList.remove('hidden');
+          showToast(data.message, 'info');
+        } else {
+          showToast(data.error || 'Login failed', 'error');
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = `Log In`;
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * OFFLINE JSON EXPORT IMPORT
+     * API Endpoint: POST /api/import-json
+     * =========================================================================
+     */
+    async function handleImportExport() {
+      const fileFollowers = document.getElementById('file-followers').files[0];
+      const fileFollowing = document.getElementById('file-following').files[0];
+
+      if (!fileFollowers && !fileFollowing) {
+        showToast('Please select at least followers_1.json or following.json', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      if (fileFollowers) formData.append('followers_file', fileFollowers);
+      if (fileFollowing) formData.append('following_file', fileFollowing);
+
+      const btn = document.getElementById('btn-import-export');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Parsing files...`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/import-json', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = `Import & Compare`;
+
+        if (data.success) {
+          showToast('Instagram export analyzed successfully!', 'success');
+          state.stats = data.stats;
+          renderProfileHero();
+          closeConnectModal();
+          await loadTabContent();
+        } else {
+          showToast(data.error || 'Import failed', 'error');
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = `Import & Compare`;
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * DEMO ACCOUNT SWITCHER
+     */
+    async function handleLoadDemo() {
+      try {
+        const res = await fetch('/api/auth/demo', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          state.account = data.account;
+          state.stats = data.stats;
+          renderProfileHero();
+          closeConnectModal();
+          await loadTabContent();
+          showToast('Connected to Demo Account', 'success');
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * CSV EXPORT UTILITY FOR WEEKLY UNFOLLOWERS
+     */
+    function exportWeeklyReport() {
+      if (state.weeklyReports.length === 0) {
+        showToast('No weekly reports to export', 'info');
+        return;
+      }
+
+      let csv = "Username,Full Name,Unfollowed Date,We Unfollowed Back\n";
+      state.weeklyReports.forEach(r => {
+        csv += `"${r.target_username}","${r.target_full_name || ''}","${r.unfollowed_date}",${r.we_unfollowed ? 'Yes' : 'No'}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `instagram_unfollowers_report_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    /**
+     * TOAST NOTIFICATION UTILITY
+     */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let borderClass = 'border-pink-500/30';
+      let icon = 'info';
+      if (type === 'success') {
+        borderClass = 'border-emerald-500/40 text-emerald-300';
+        icon = 'check-circle';
+      } else if (type === 'error') {
+        borderClass = 'border-rose-500/40 text-rose-300';
+        icon = 'alert-triangle';
+      }
+
+      toast.className = `glass-card bg-slate-900/95 px-4 py-3 rounded-xl border ${borderClass} shadow-xl flex items-center gap-2.5 text-xs font-semibold text-slate-100 max-w-sm pointer-events-auto animate-in slide-in-from-bottom duration-200`;
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i><span>${message}</span>`;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'transition-opacity');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>

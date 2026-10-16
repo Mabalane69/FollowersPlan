@@ -1,0 +1,22 @@
+{
+  "name": "FollowersPlan - Instagram Follower & Unfollower Suite",
+  "short_name": "FollowersPlan",
+  "description": "Cross-platform Instagram follower tracker, non-follower detector, safe bulk unfollow, and weekly reports.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
