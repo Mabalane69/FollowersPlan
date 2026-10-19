@@ -27,10 +27,12 @@ from datetime import datetime, timedelta
 
 # Import central configuration settings
 import config
-from database import (
-    save_or_update_account, record_scan_snapshot,
-    mark_unfollowed, get_account_by_username
-)
+from firebase_service import FirebaseService
+
+save_or_update_account = FirebaseService.save_or_update_account
+record_scan_snapshot = FirebaseService.record_scan_snapshot
+mark_unfollowed = FirebaseService.mark_unfollowed
+get_account_by_username = FirebaseService.get_account_by_username
 
 logger = logging.getLogger(__name__)
 
@@ -462,39 +464,6 @@ class InstagramService:
 
                 mode = acc.get('mode', 'live')
 
-                # DEMO MODE: Stream simulated progress
-                if mode == 'demo':
-                    scan_job["phase"] = "following"
-                    scan_job["message"] = "Scanning Following list..."
-                    for p in range(10, 50, 10):
-                        scan_job["progress_percent"] = p
-                        time.sleep(0.3)
-
-                    scan_job["phase"] = "followers"
-                    scan_job["message"] = "Scanning Followers list..."
-                    for p in range(50, 85, 10):
-                        scan_job["progress_percent"] = p
-                        time.sleep(0.3)
-
-                    scan_job["phase"] = "analyzing"
-                    scan_job["message"] = "Comparing relationships & weekly diff..."
-                    scan_job["progress_percent"] = 92
-                    time.sleep(0.4)
-
-                    from demo_data import get_demo_followers_and_following
-                    followers, following = get_demo_followers_and_following()
-                    snapshot = record_scan_snapshot(account_id, followers, following)
-
-                    scan_job["status"] = "completed"
-                    scan_job["phase"] = "completed"
-                    scan_job["progress_percent"] = 100
-                    scan_job["following_count"] = len(following)
-                    scan_job["followers_count"] = len(followers)
-                    scan_job["not_following_back"] = snapshot["not_following_back_count"]
-                    scan_job["message"] = "Scan finished successfully!"
-                    scan_job["completed_at"] = datetime.now().isoformat()
-                    return
-
                 # --------------------------------------------------------------
                 # LIVE INSTAGRAM API SCAN
                 # --------------------------------------------------------------
@@ -610,14 +579,6 @@ class InstagramService:
         acc = get_account_by_username(username)
         if not acc:
             return {"success": False, "error": "Account not found in database"}
-
-        mode = acc.get('mode', 'live')
-
-        # DEMO MODE: Mock unfollow
-        if mode == 'demo':
-            time.sleep(0.4)
-            mark_unfollowed(account_id, target_username, log_status='simulated')
-            return {"success": True, "target_username": target_username, "mode": "demo"}
 
         cl = InstagramService.get_client(username)
         if not cl:

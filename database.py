@@ -25,7 +25,7 @@ def init_db():
         follower_count INTEGER DEFAULT 0,
         following_count INTEGER DEFAULT 0,
         session_data TEXT,
-        mode TEXT DEFAULT 'demo', -- 'live', 'export', 'demo'
+        mode TEXT DEFAULT 'live', -- 'live', 'export'
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_scanned_at TIMESTAMP
     )
@@ -99,6 +99,19 @@ def init_db():
     conn.commit()
     conn.close()
 
+def clear_all_data():
+    """Wipes all accounts, relationships, scans, and weekly reports so the system is 100% clean for real live data."""
+    init_db()
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM unfollow_logs')
+    c.execute('DELETE FROM weekly_reports')
+    c.execute('DELETE FROM relationships')
+    c.execute('DELETE FROM scans')
+    c.execute('DELETE FROM accounts')
+    conn.commit()
+    conn.close()
+
 def save_or_update_account(username, user_id=None, full_name=None, profile_pic_url=None,
                            follower_count=0, following_count=0, session_data=None, mode='live'):
     conn = get_connection()
@@ -134,6 +147,14 @@ def get_latest_account():
     account = c.execute('SELECT * FROM accounts ORDER BY last_scanned_at DESC LIMIT 1').fetchone()
     conn.close()
     return dict(account) if account else None
+
+def get_all_accounts():
+    """Returns list of all registered Instagram accounts for multi-client management."""
+    conn = get_connection()
+    c = conn.cursor()
+    rows = c.execute('SELECT id, username, user_id, full_name, profile_pic_url, follower_count, following_count, mode, last_scanned_at FROM accounts ORDER BY last_scanned_at DESC').fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 def record_scan_snapshot(account_id, followers_list, following_list):
     """

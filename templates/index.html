@@ -20,6 +20,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- =========================================================================
+       FIREBASE WEB CLIENT SDK
+       For real-time cloud data synchronization
+       ========================================================================= -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -82,26 +89,33 @@
 <body class="min-h-screen flex flex-col pb-20 md:pb-6">
 
   <!-- =========================================================================
-       1. TOP NAVIGATION BAR (LOGO, LIVE STATUS DOT, SCAN TRIGGER, ACCOUNT PILL)
+       1. TOP NAVIGATION BAR (LOGO, LIVE STATUS DOT, FIREBASE PILL, SCAN TRIGGER)
        ========================================================================= -->
   <header class="sticky top-0 z-40 w-full glass-card border-b border-slate-800/80 px-4 lg:px-8 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       
-      <!-- Brand Logo & Live API Status Dot -->
+      <!-- Brand Logo & Live Status -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl ig-bg-gradient flex items-center justify-center shadow-lg shadow-pink-500/20 text-white font-bold text-xl flex-shrink-0">
           <i data-lucide="instagram" class="w-6 h-6"></i>
         </div>
         <div>
-          <h1 class="text-lg md:text-xl font-extrabold tracking-tight flex items-center gap-2">
-            Followers<span class="ig-text-gradient">Plan</span>
-            <!-- DYNAMIC API STATUS INDICATOR: Updated via checkApiHealth() -->
-            <span id="api-status-pill" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="api-status-label">Live API Ready</span>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-extrabold tracking-tight">
+              Followers<span class="ig-text-gradient">Plan</span>
+            </h1>
+            <!-- Dynamic API Status -->
+            <span id="api-status-pill" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+              <span id="api-status-label">Offline</span>
             </span>
-          </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">Real-Time Instagram Follower & Unfollower Platform</p>
+            <!-- Firebase Status -->
+            <span id="firebase-status-pill" class="hidden sm:flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 items-center gap-1">
+              <i data-lucide="flame" class="w-3 h-3 text-amber-400"></i>
+              <span id="firebase-status-label">Firebase</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Real-Time Cloud Instagram Follower & Unfollower Platform</p>
         </div>
       </div>
 
@@ -121,7 +135,7 @@
           <span class="sm:hidden">Scan</span>
         </button>
 
-        <!-- Account Pill Container: Dynamic avatar and username populated by JS -->
+        <!-- Account Pill Container -->
         <div id="account-pill-container">
           <button onclick="openConnectModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-medium bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all">
             <i data-lucide="user-plus" class="w-4 h-4 text-pink-400"></i>
@@ -135,7 +149,6 @@
 
   <!-- =========================================================================
        2. REAL-TIME STREAMING SCAN PROGRESS BANNER
-       Shows live percentage, phase, and counters ticking up while scanning
        ========================================================================= -->
   <div id="live-scan-banner" class="hidden max-w-7xl w-full mx-auto px-4 lg:px-8 pt-4">
     <div class="glass-card bg-slate-900/90 rounded-2xl p-4 border border-pink-500/30 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -160,7 +173,7 @@
   </div>
 
   <!-- =========================================================================
-       3. MAIN DASHBOARD (PROFILE HERO, LIVE STATS, FILTER TABS, PROFILES LIST)
+       3. MAIN DASHBOARD (CLEAN INITIAL STATE WITHOUT STATIC MOCK DATA)
        ========================================================================= -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
 
@@ -174,23 +187,32 @@
         <div class="flex items-center gap-4 md:gap-5">
           <!-- Story Avatar Ring -->
           <div class="relative p-1 rounded-full ig-bg-gradient flex-shrink-0 shadow-lg shadow-pink-500/20">
-            <img id="hero-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop" alt="Profile" class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-slate-900 bg-slate-800">
-            <span id="hero-mode-badge" class="absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 border border-slate-900 shadow">
-              LIVE
+            <!-- Dynamic Silhouette Placeholder -->
+            <div id="hero-avatar-placeholder" class="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-slate-800 text-slate-400 border-2 border-slate-900">
+              <i data-lucide="user" class="w-8 h-8 md:w-10 md:h-10"></i>
+            </div>
+            <!-- Dynamic Live Profile Avatar Image -->
+            <img id="hero-avatar" src="" alt="Profile" class="hidden w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-slate-900 bg-slate-800">
+            <span id="hero-mode-badge" class="absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-900 shadow">
+              OFFLINE
             </span>
           </div>
 
-          <!-- Names & Meta -->
+          <!-- Dynamic Names & Status -->
           <div>
-            <div class="flex items-center gap-2">
-              <h2 id="hero-username" class="text-xl md:text-2xl font-black text-white">@username</h2>
-              <i id="hero-verified" data-lucide="badge-check" class="w-5 h-5 text-sky-400 fill-sky-400/20"></i>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 id="hero-username" class="text-xl md:text-2xl font-black text-white">Not Connected</h2>
+              <i id="hero-verified" data-lucide="badge-check" class="hidden w-5 h-5 text-sky-400 fill-sky-400/20"></i>
+              <button id="btn-hero-switch-account" onclick="openAccountSwitcherModal()" class="hidden px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-all">
+                <i data-lucide="repeat" class="w-3.5 h-3.5 text-pink-400"></i>
+                <span>Switch Account</span>
+              </button>
             </div>
-            <p id="hero-fullname" class="text-sm text-slate-300 font-medium">Instagram Account</p>
+            <p id="hero-fullname" class="text-sm text-slate-400 font-medium">Connect your Instagram account or set keys in config.py</p>
             <div class="flex items-center gap-3 mt-1.5 flex-wrap">
               <p id="hero-last-scanned" class="text-xs text-slate-400 flex items-center gap-1.5">
                 <i data-lucide="clock" class="w-3.5 h-3.5 text-pink-400"></i>
-                Last scan: <span id="text-last-scanned">Just now</span>
+                Last scan: <span id="text-last-scanned">Never</span>
               </p>
               <button onclick="openWizardModal()" class="text-xs text-sky-400 hover:text-sky-300 underline font-medium flex items-center gap-1">
                 <i data-lucide="sliders" class="w-3 h-3"></i> Setup Live Guide
@@ -199,7 +221,7 @@
           </div>
         </div>
 
-        <!-- Quick Summary Metrics (Live Count Binders) -->
+        <!-- Quick Summary Metrics (Initialized cleanly to 0) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 w-full lg:w-auto">
           
           <!-- Not Following Back Metric -->
@@ -327,18 +349,24 @@
     <!-- 1. Profiles Grid / List -->
     <div id="profiles-section" class="space-y-3">
       
-      <!-- Dynamic Profile List (Populated by renderProfiles()) -->
+      <!-- Dynamic Profile List -->
       <div id="profiles-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Rendered by JS -->
+        <!-- Rendered dynamically by renderProfiles() -->
       </div>
 
-      <!-- Empty State -->
-      <div id="profiles-empty" class="hidden glass-card rounded-2xl p-12 text-center space-y-3">
+      <!-- Clean Empty State (No Static Profiles) -->
+      <div id="profiles-empty" class="glass-card rounded-2xl p-12 text-center space-y-4">
         <div class="w-16 h-16 rounded-full bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto">
-          <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400"></i>
+          <i data-lucide="users" class="w-8 h-8 text-pink-400"></i>
         </div>
-        <h3 class="text-lg font-bold text-white">All Clear!</h3>
-        <p class="text-sm text-slate-400 max-w-sm mx-auto">No profiles found in this category matching your filters.</p>
+        <div>
+          <h3 class="text-lg font-bold text-white">No Profiles Loaded Yet</h3>
+          <p class="text-sm text-slate-400 max-w-sm mx-auto mt-1">Connect your Instagram account and click "Scan Profiles" to fetch real-time followers and detect non-followers.</p>
+        </div>
+        <button onclick="openConnectModal()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white ig-bg-gradient shadow-md shadow-pink-500/20 active:scale-95 transition-all">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Connect Instagram Account</span>
+        </button>
       </div>
 
       <!-- Loading Spinner -->
@@ -375,12 +403,12 @@
         <!-- Rendered by loadWeeklyReports() -->
       </div>
 
-      <div id="weekly-reports-empty" class="hidden glass-card rounded-2xl p-12 text-center space-y-3">
+      <div id="weekly-reports-empty" class="glass-card rounded-2xl p-12 text-center space-y-3">
         <div class="w-16 h-16 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
           <i data-lucide="smile" class="w-8 h-8"></i>
         </div>
-        <h3 class="text-lg font-bold text-white">No Unfollowers Detected This Week</h3>
-        <p class="text-sm text-slate-400 max-w-sm mx-auto">Great news! No one has unfollowed your account since your previous scan snapshots.</p>
+        <h3 class="text-lg font-bold text-white">No Unfollowers Detected Yet</h3>
+        <p class="text-sm text-slate-400 max-w-sm mx-auto">As you perform routine scans over the coming days, any user who unfollows your account will be tracked here.</p>
       </div>
 
     </div>
@@ -424,10 +452,10 @@
         <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-2">
           <div class="flex items-center gap-2">
             <span class="w-6 h-6 rounded-full ig-bg-gradient text-white text-xs font-bold flex items-center justify-center">2</span>
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Live API Verification</h4>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Firebase Cloud Sync</h4>
           </div>
           <p class="text-xs text-slate-300 leading-relaxed">
-            The app verifies handshake validity directly with Instagram's web endpoints and retrieves your active follower stats.
+            Snapshots and relationship histories are stored securely in Google Cloud Firestore for instant cross-device synchronization.
           </p>
         </div>
 
@@ -437,7 +465,7 @@
             <h4 class="text-xs font-bold text-white uppercase tracking-wider">Real-Time Deep Scan</h4>
           </div>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Background worker iterates through your Following list, compares each account with Followers, and checks who does NOT follow you.
+            Background worker iterates through your live Following list, compares each account with Followers, and checks who does NOT follow you.
           </p>
         </div>
 
@@ -455,9 +483,7 @@
 
       <!-- Footer Buttons -->
       <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
-        <button onclick="handleLoadDemo(); closeWizardModal();" class="text-xs text-slate-400 hover:text-pink-400">
-          Try Demo First
-        </button>
+        <span class="text-xs text-slate-400">Keys configured in <code class="text-pink-400 font-mono">config.py</code></span>
         <button onclick="closeWizardModal(); openConnectModal();" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white ig-bg-gradient shadow-md shadow-pink-500/20 active:scale-95 transition-all">
           Connect Real Account Now
         </button>
@@ -511,7 +537,6 @@
           <select id="bulk-delay-select" class="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-pink-500">
             <option value="6">Recommended (6s - 8s delay)</option>
             <option value="12">Conservative (12s delay)</option>
-            <option value="2">Fast (Demo / Simulation)</option>
           </select>
         </div>
         <p class="text-[11px] text-slate-400 leading-relaxed">
@@ -527,6 +552,55 @@
         <button id="btn-bulk-start" onclick="executeBulkUnfollow()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-500/20">
           <i data-lucide="play" class="w-4 h-4"></i>
           <span>Start Safe Unfollow</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ACCOUNT SWITCHER & MULTI-CLIENT PROFILE MANAGEMENT MODAL
+       ========================================================================= -->
+  <div id="modal-account-switcher" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 flex items-center justify-center">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Client Accounts</h3>
+            <p class="text-xs text-slate-400">Switch between profiles or connect new client</p>
+          </div>
+        </div>
+        <button onclick="closeAccountSwitcherModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Active Account Card -->
+      <div id="switcher-active-account" class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Other Accounts List -->
+      <div class="space-y-2">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Switch Active Account</div>
+        <div id="switcher-accounts-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
+        <button onclick="openConnectFromSwitcher()" class="w-full py-2.5 rounded-xl text-xs font-bold text-white ig-bg-gradient flex items-center justify-center gap-2 hover:opacity-95 active:scale-95 transition-all cursor-pointer">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Connect Another Account</span>
+        </button>
+        <button onclick="handleLogout()" class="w-full py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Disconnect Active Account</span>
         </button>
       </div>
 
@@ -644,13 +718,10 @@
         </div>
       </div>
 
-      <!-- Quick Demo Switcher -->
-      <div class="border-t border-slate-800 pt-3 flex items-center justify-between">
-        <span class="text-xs text-slate-400">Want to test features right now?</span>
-        <button onclick="handleLoadDemo()" class="text-xs font-bold text-pink-400 hover:text-pink-300 underline flex items-center gap-1">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-          Explore with Demo Account
-        </button>
+      <!-- Config Link Footer -->
+      <div class="border-t border-slate-800 pt-3 flex items-center justify-between text-xs text-slate-400">
+        <span>Set keys in:</span>
+        <code class="text-pink-400 font-mono bg-slate-800 px-2 py-0.5 rounded">config.py</code>
       </div>
 
     </div>
@@ -690,28 +761,50 @@
   <script>
     /**
      * =========================================================================
-     * APPLICATION STATE STORE
+     * FIREBASE WEB CLIENT CONFIGURATION & CREDENTIALS
+     * Replace placeholder values below with your Firebase Web App credentials:
      * =========================================================================
-     * Holds live accounts, calculated metrics, active tab, selected profiles,
-     * and active polling timers.
      */
-    let state = {
-      account: null,             // Currently active Instagram account
-      stats: null,               // Stats: followers, following, non-followers, mutuals
-      currentTab: 'not_following_back', // Active tab filter
-      profiles: [],              // Cached profiles for current tab
-      weeklyReports: [],         // Weekly unfollowers diff logs
-      selectedUsernames: new Set(), // Checkboxed usernames for bulk unfollow
-      searchQuery: '',           // Current search filter
-      isBulkRunning: false,      // Bulk unfollow loop state
-      bulkPollInterval: null,    // Timer ID for bulk unfollow progress polling
-      scanPollInterval: null     // Timer ID for live scan progress polling
+    const firebaseConfig = {
+      apiKey: "add your firebase api key here",
+      authDomain: "add your auth domain here",
+      projectId: "add your project id here",
+      storageBucket: "add your storage bucket here",
+      messagingSenderId: "add your sender id here",
+      appId: "add your app id here"
     };
 
+    // Initialize Firebase Client SDK if keys are provided
+    let firebaseApp = null;
+    let firestoreDb = null;
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "add your firebase api key here") {
+      try {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+        firestoreDb = firebase.firestore();
+        console.log("🔥 Firebase Web Client initialized successfully!");
+      } catch (e) {
+        console.warn("Firebase Web Client init error:", e);
+      }
+    }
+
     /**
-     * INITIALIZATION ON PAGE LOAD
-     * Registers service worker, loads icons, and fetches initial account stats.
+     * =========================================================================
+     * APPLICATION STATE STORE
+     * =========================================================================
      */
+    let state = {
+      account: null,                // Currently active Instagram account
+      stats: null,                  // Calculated stats
+      currentTab: 'not_following_back', // Active tab filter
+      profiles: [],                 // Profile rows
+      weeklyReports: [],            // Weekly unfollowers diff logs
+      selectedUsernames: new Set(), // Checkboxed usernames for bulk unfollow
+      searchQuery: '',              // Live search query
+      isBulkRunning: false,         // Bulk unfollow loop state
+      bulkPollInterval: null,       // Timer ID for bulk unfollow progress
+      scanPollInterval: null        // Timer ID for live scan progress
+    };
+
     document.addEventListener('DOMContentLoaded', async () => {
       lucide.createIcons();
       initPWA();
@@ -719,13 +812,30 @@
       await loadTabContent();
     });
 
-    /**
-     * PWA SERVICE WORKER REGISTRATION
-     */
     function initPWA() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
       }
+    }
+
+    /**
+     * =========================================================================
+     * MULTI-CLIENT & MULTI-TENANT FETCH WRAPPER
+     * Guarantees cookies and isolated X-Account-Username headers are passed
+     * on every request so multiple users and clients never collide.
+     * =========================================================================
+     */
+    function apiFetch(url, options = {}) {
+      const opts = { credentials: 'same-origin', ...options };
+      opts.headers = { ...(opts.headers || {}) };
+      
+      const savedUser = localStorage.getItem('followersplan_active_account');
+      if (state.account && state.account.username) {
+        opts.headers['X-Account-Username'] = state.account.username;
+      } else if (savedUser) {
+        opts.headers['X-Account-Username'] = savedUser;
+      }
+      return fetch(url, opts);
     }
 
     /**
@@ -736,15 +846,19 @@
      */
     async function fetchAccountAndStats() {
       try {
-        const res = await fetch('/api/account/current');
+        const res = await apiFetch('/api/account/current');
         const data = await res.json();
         if (data.authenticated && data.account) {
           state.account = data.account;
           state.stats = data.stats;
+          localStorage.setItem('followersplan_active_account', data.account.username);
           renderProfileHero();
           checkApiHealth();
         } else {
-          openWizardModal();
+          state.account = null;
+          state.stats = null;
+          renderProfileHero(); // Render unauthenticated state
+          checkApiHealth();
         }
       } catch (e) {
         console.error('Error fetching account:', e);
@@ -753,23 +867,34 @@
 
     /**
      * =========================================================================
-     * LIVE API HEALTH MONITORING
+     * LIVE API & FIREBASE HEALTH MONITORING
      * API Endpoint: GET /api/auth/health
-     * Pings Instagram to confirm the stored session cookie is still valid.
      * =========================================================================
      */
     async function checkApiHealth() {
       try {
         const res = await fetch('/api/auth/health');
         const data = await res.json();
+        
         const pill = document.getElementById('api-status-pill');
         const label = document.getElementById('api-status-label');
+        const fbPill = document.getElementById('firebase-status-pill');
+        const fbLabel = document.getElementById('firebase-status-label');
+
         if (data.healthy) {
-          label.textContent = data.mode === 'live' ? 'Live API Active' : 'Demo Mode';
+          label.textContent = 'Live API Active';
           pill.className = "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1";
         } else {
-          label.textContent = 'Session Expired';
-          pill.className = "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1";
+          label.textContent = state.account ? 'Session Expired' : 'Not Connected';
+          pill.className = "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1";
+        }
+
+        if (data.firebase_connected || firestoreDb) {
+          fbLabel.textContent = 'Firestore Active';
+          fbPill.className = "hidden sm:flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 items-center gap-1";
+        } else {
+          fbLabel.textContent = 'Local Cache';
+          fbPill.className = "hidden sm:flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 items-center gap-1";
         }
       } catch (e) {}
     }
@@ -777,27 +902,69 @@
     /**
      * =========================================================================
      * DOM BINDING: HERO BANNER & STAT COUNTERS
-     * Updates profile avatar, handle, verified badge, and live metric counts.
+     * Dynamically renders connected account details or clean empty state.
      * =========================================================================
      */
     function renderProfileHero() {
-      if (!state.account) return;
+      const avatarImg = document.getElementById('hero-avatar');
+      const avatarPlaceholder = document.getElementById('hero-avatar-placeholder');
+      const usernameEl = document.getElementById('hero-username');
+      const fullnameEl = document.getElementById('hero-fullname');
+      const badgeEl = document.getElementById('hero-mode-badge');
+      const verifiedEl = document.getElementById('hero-verified');
+      const pillContainer = document.getElementById('account-pill-container');
+
+      if (!state.account) {
+        // CLEAN EMPTY STATE (NO STATIC FAKE PROFILES)
+        avatarPlaceholder.classList.remove('hidden');
+        avatarImg.classList.add('hidden');
+        usernameEl.textContent = 'Not Connected';
+        fullnameEl.textContent = 'Connect your Instagram account or set keys in config.py';
+        badgeEl.textContent = 'OFFLINE';
+        badgeEl.className = "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-900 shadow";
+        verifiedEl.classList.add('hidden');
+        const switchBtn = document.getElementById('btn-hero-switch-account');
+        if (switchBtn) { switchBtn.classList.add('hidden'); switchBtn.classList.remove('flex'); }
+
+        document.getElementById('stat-not-following-back').textContent = '0';
+        document.getElementById('badge-not-following-back').textContent = '0';
+        document.getElementById('stat-lost-weekly').textContent = '0';
+        document.getElementById('badge-weekly-reports').textContent = '0';
+        document.getElementById('stat-mutual').textContent = '0';
+        document.getElementById('badge-mutual').textContent = '0';
+        document.getElementById('stat-fans').textContent = '0';
+        document.getElementById('badge-fans').textContent = '0';
+
+        pillContainer.innerHTML = `
+          <button onclick="openConnectModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-medium bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all cursor-pointer">
+            <i data-lucide="user-plus" class="w-4 h-4 text-pink-400"></i>
+            <span>Connect Live</span>
+          </button>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      // CONNECTED REAL LIVE ACCOUNT
       const acc = state.account;
       const stats = state.stats || {};
 
-      document.getElementById('hero-username').textContent = '@' + acc.username;
-      document.getElementById('hero-fullname').textContent = acc.full_name || acc.username;
-      if (acc.profile_pic_url) {
-        document.getElementById('hero-avatar').src = acc.profile_pic_url;
-      }
+      usernameEl.textContent = '@' + acc.username;
+      fullnameEl.textContent = acc.full_name || acc.username;
       
-      const badge = document.getElementById('hero-mode-badge');
-      badge.textContent = (acc.mode || 'live').toUpperCase();
-      badge.className = acc.mode === 'live' 
-        ? "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 border border-slate-900 shadow"
-        : "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 border border-slate-900 shadow";
+      const switchBtn = document.getElementById('btn-hero-switch-account');
+      if (switchBtn) { switchBtn.classList.remove('hidden'); switchBtn.classList.add('flex'); }
+      
+      if (acc.profile_pic_url) {
+        avatarImg.src = acc.profile_pic_url;
+        avatarImg.classList.remove('hidden');
+        avatarPlaceholder.classList.add('hidden');
+      }
 
-      // Bind dynamic stats counters
+      badgeEl.textContent = 'LIVE';
+      badgeEl.className = "absolute -bottom-1 -right-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 border border-slate-900 shadow";
+
+      // Stats counters
       document.getElementById('stat-not-following-back').textContent = stats.not_following_back_count || 0;
       document.getElementById('badge-not-following-back').textContent = stats.not_following_back_count || 0;
       
@@ -810,10 +977,8 @@
       document.getElementById('stat-fans').textContent = stats.fans_count || 0;
       document.getElementById('badge-fans').textContent = stats.fans_count || 0;
 
-      // Update Top Nav Account Pill
-      const pillContainer = document.getElementById('account-pill-container');
       pillContainer.innerHTML = `
-        <button onclick="openConnectModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all text-xs">
+        <button onclick="openAccountSwitcherModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 text-slate-200 border border-slate-700 hover:bg-slate-700/80 transition-all text-xs cursor-pointer shadow">
           <img src="${acc.profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + acc.username}" class="w-6 h-6 rounded-full object-cover">
           <span class="font-bold hidden sm:inline">@${acc.username}</span>
           <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
@@ -905,14 +1070,13 @@
       } catch (e) {
         console.error('Error loading relationships:', e);
         loadingEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
       }
     }
 
     /**
      * =========================================================================
-     * DOM BINDING: RENDER PROFILE CARDS
-     * Generates profile cards with avatar, badges, whitelist shield, and
-     * single unfollow action button.
+     * DOM BINDING: RENDER REAL PROFILE CARDS
      * =========================================================================
      */
     function renderProfiles(profiles) {
@@ -935,21 +1099,17 @@
           <div id="card-${p.target_username}" class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3 border border-slate-800/80 transition-all hover:border-slate-700">
             
             <div class="flex items-center gap-3 min-w-0">
-              
-              <!-- Multi-select checkbox -->
               ${p.followed_by_me && !isWhitelisted && !isUnfollowed ? `
                 <input type="checkbox" onchange="toggleSelectUser('${p.target_username}', this.checked)" ${isSelected ? 'checked' : ''} class="rounded text-pink-600 focus:ring-pink-500 bg-slate-900 border-slate-700 w-4 h-4 flex-shrink-0 cursor-pointer">
               ` : `
                 <div class="w-4 flex-shrink-0"></div>
               `}
 
-              <!-- Profile Avatar -->
               <div class="relative flex-shrink-0">
                 <img src="${p.target_profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + p.target_username}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=${p.target_username}'" class="w-12 h-12 rounded-full object-cover border border-slate-700 bg-slate-800">
                 ${p.is_verified ? `<i data-lucide="badge-check" class="w-4 h-4 text-sky-400 fill-sky-400/20 absolute -bottom-1 -right-1"></i>` : ''}
               </div>
 
-              <!-- Name & Handle -->
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <a href="https://instagram.com/${p.target_username}" target="_blank" class="text-sm font-bold text-white hover:text-pink-400 transition-colors truncate">
@@ -965,15 +1125,11 @@
 
             </div>
 
-            <!-- Action Buttons: Whitelist & Unfollow -->
             <div class="flex items-center gap-2 flex-shrink-0">
-              
-              <!-- Protect / Whitelist Button -->
               <button onclick="handleToggleWhitelist('${p.target_username}')" title="${isWhitelisted ? 'Remove protection' : 'Protect from bulk unfollow'}" class="p-2 rounded-xl text-xs ${isWhitelisted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400 hover:text-slate-200'} transition-all">
                 <i data-lucide="${isWhitelisted ? 'shield-check' : 'shield'}" class="w-4 h-4"></i>
               </button>
 
-              <!-- Single Unfollow Button -->
               ${p.followed_by_me && !isUnfollowed ? `
                 <button id="btn-unfollow-${p.target_username}" onclick="handleUnfollowSingle('${p.target_username}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 active:scale-95 transition-all">
                   <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
@@ -1042,7 +1198,6 @@
                 </div>
               </div>
 
-              <!-- Unfollow Back Button -->
               <div class="flex-shrink-0">
                 ${!r.we_unfollowed && r.followed_by_me ? `
                   <button id="btn-unfollow-weekly-${r.target_username}" onclick="handleUnfollowSingle('${r.target_username}', true)" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-md shadow-rose-600/20">
@@ -1099,7 +1254,7 @@
         icon.classList.remove('animate-spin');
         btn.disabled = false;
         banner.classList.add('hidden');
-        showToast('Error connecting: ' + e.message, 'error');
+        showToast('Error: ' + e.message, 'error');
       }
     }
 
@@ -1237,17 +1392,11 @@
       }
     }
 
-    /**
-     * SEARCH FILTER INPUT HANDLER
-     */
     function handleSearch(val) {
       state.searchQuery = val;
       loadTabContent();
     }
 
-    /**
-     * SELECTION CONTROLS FOR BULK UNFOLLOW
-     */
     function toggleSelectUser(username, isChecked) {
       if (isChecked) {
         state.selectedUsernames.add(username);
@@ -1290,9 +1439,6 @@
     /**
      * =========================================================================
      * SAFE BULK UNFOLLOW CONTROLLER & PROGRESS POLLING
-     * API Endpoint 1: POST /api/bulk-unfollow/start
-     * API Endpoint 2: GET  /api/bulk-unfollow/status (Polled every 1000ms)
-     * API Endpoint 3: POST /api/bulk-unfollow/control (Pause/Cancel)
      * =========================================================================
      */
     function openBulkModal() {
@@ -1571,22 +1717,115 @@
     }
 
     /**
-     * DEMO ACCOUNT SWITCHER
+     * =========================================================================
+     * MULTI-CLIENT & MULTI-ACCOUNT SWITCHER CONTROLLER
+     * Enables switching between multiple client accounts seamlessly.
+     * =========================================================================
      */
-    async function handleLoadDemo() {
+    async function openAccountSwitcherModal() {
+      const modal = document.getElementById('modal-account-switcher');
+      const activeEl = document.getElementById('switcher-active-account');
+      const listEl = document.getElementById('switcher-accounts-list');
+
+      if (!state.account) {
+        openConnectModal();
+        return;
+      }
+
+      activeEl.innerHTML = `
+        <div class="flex items-center gap-3">
+          <img src="${state.account.profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + state.account.username}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow">
+          <div>
+            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>@${state.account.username}</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">Active</span>
+            </div>
+            <div class="text-[11px] text-slate-400">${state.account.full_name || state.account.username}</div>
+          </div>
+        </div>
+      `;
+
+      listEl.innerHTML = '<div class="text-xs text-slate-400 py-2 text-center">Loading accounts...</div>';
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
       try {
-        const res = await fetch('/api/auth/demo', { method: 'POST' });
+        const res = await apiFetch('/api/accounts');
+        const data = await res.json();
+        const otherAccounts = (data.accounts || []).filter(a => a.username !== state.account.username);
+
+        if (otherAccounts.length === 0) {
+          listEl.innerHTML = '<div class="text-xs text-slate-400 py-3 text-center bg-slate-800/40 rounded-xl border border-slate-800">No other connected accounts found. Click below to add another client profile.</div>';
+        } else {
+          listEl.innerHTML = otherAccounts.map(a => `
+            <div class="p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 flex items-center justify-between transition-all">
+              <div class="flex items-center gap-2.5">
+                <img src="${a.profile_pic_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + a.username}" class="w-8 h-8 rounded-full object-cover">
+                <div>
+                  <div class="text-xs font-bold text-white">@${a.username}</div>
+                  <div class="text-[10px] text-slate-400">${a.full_name || a.username}</div>
+                </div>
+              </div>
+              <button onclick="handleSwitchAccount('${a.username}')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-pink-600 text-slate-200 hover:text-white transition-all cursor-pointer">
+                Switch
+              </button>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        listEl.innerHTML = '<div class="text-xs text-rose-400 py-2 text-center">Could not load accounts list.</div>';
+      }
+      lucide.createIcons();
+    }
+
+    function closeAccountSwitcherModal() {
+      document.getElementById('modal-account-switcher').classList.add('hidden');
+    }
+
+    function openConnectFromSwitcher() {
+      closeAccountSwitcherModal();
+      openConnectModal();
+    }
+
+    async function handleSwitchAccount(username) {
+      try {
+        const res = await apiFetch('/api/accounts/switch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
         const data = await res.json();
         if (data.success) {
           state.account = data.account;
           state.stats = data.stats;
+          localStorage.setItem('followersplan_active_account', username);
+          closeAccountSwitcherModal();
           renderProfileHero();
-          closeConnectModal();
           await loadTabContent();
-          showToast('Connected to Demo Account', 'success');
+          showToast(`Switched active profile to @${username}`, 'success');
+        } else {
+          showToast(data.error || 'Failed to switch profile', 'error');
         }
       } catch (e) {
-        showToast('Error: ' + e.message, 'error');
+        showToast('Network error while switching account', 'error');
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+        localStorage.removeItem('followersplan_active_account');
+        state.account = null;
+        state.stats = null;
+        state.profiles = [];
+        state.weeklyReports = [];
+        closeAccountSwitcherModal();
+        renderProfileHero();
+        await loadTabContent();
+        checkApiHealth();
+        showToast('Disconnected current account', 'info');
+      } catch (e) {
+        showToast('Error disconnecting account', 'error');
       }
     }
 

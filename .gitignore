@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+serviceAccountKey*.json
+*.log
 
 # Local account data and authenticated sessions
 *.db
